@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vero's Reseller Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d1b69 100%);
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background particles */
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .particle {
+      position: absolute;
+      background: rgba(147, 51, 234, 0.1);
+      border-radius: 50%;
+      animation: float 8s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+      50% { transform: translateY(-30px) rotate(180deg); opacity: 0.8; }
+    }
+
+    /* Blur overlay when not authenticated */
+    .blur-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backdrop-filter: blur(15px);
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 2;
+      transition: all 0.6s ease;
+      opacity: 1;
+    }
+
+    .blur-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Main container */
+    .container {
+      position: relative;
+      z-index: 3;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header section */
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      color: white;
+      font-weight: bold;
+      animation: pulse 3s ease-in-out infinite;
+      box-shadow: 0 15px 35px rgba(147, 51, 234, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      animation: shine 4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); box-shadow: 0 15px 35px rgba(147, 51, 234, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 20px 45px rgba(147, 51, 234, 0.6); }
+    }
+
+    @keyframes shine {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    h1 {
+      font-size: 3rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #9333ea, #7c3aed, #06b6d4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: #a1a1aa;
+      margin-bottom: 30px;
+    }
+
+    /* Discord button */
+    .discord-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .discord-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 15px 30px;
+      background: linear-gradient(135deg, #5865f2, #4752c4);
+      color: white;
+      text-decoration: none;
+      border-radius: 15px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      box-shadow: 0 8px 25px rgba(88, 101, 242, 0.3);
+    }
+
+    .discord-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 40px rgba(88, 101, 242, 0.5);
+    }
+
+    /* Login section */
+    .login-section {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      animation: slideUp 0.8s ease-out 0.2s both;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .login-section h2 {
+      color: #9333ea;
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    .login-form {
+      display: flex;
+      gap: 15px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    /* Input and button styles */
+    input, select, button {
+      padding: 15px 20px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 16px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    input {
+      flex: 1;
+      min-width: 300px;
+    }
+
+    input:focus {
+      border-color: #9333ea;
+      box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
+      transform: translateY(-2px);
+    }
+
+    input::placeholder {
+      color: #a1a1aa;
+    }
+
+    button {
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      border: none;
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      min-width: 120px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(147, 51, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    button:hover::before {
+      left: 100%;
+    }
+
+    /* Section styling */
+    .section {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 30px;
+      margin-bottom: 30px;
+      animation: slideUp 0.8s ease-out 0.4s both;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .section h2 {
+      color: #9333ea;
+      margin-bottom: 25px;
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .section h2::before {
+      content: '';
+      width: 4px;
+      height: 30px;
+      background: linear-gradient(135deg, #9333ea, #7c3aed);
+      border-radius: 2px;
+    }
+
+    /* Key item styling */
+    .key-item {
+      background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(124, 58, 237, 0.1));
+      border: 1px solid rgba(147, 51, 234, 0.2);
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      transition: all 0.3s ease;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    .key-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(147, 51, 234, 0.2);
+      border-color: rgba(147, 51, 234, 0.4);
+    }
+
+    .key-item input {
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 0;
+      min-width: 0;
+    }
+
+    .key-item .duration {
+      background: linear-gradient(135deg, #06b6d4, #0891b2);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .copy-button {
+      background: linear-gradient(135deg, #059669, #047857);
+      min-width: 80px;
+    }
+
+    .copy-button:hover {
+      box-shadow: 0 8px 20px rgba(5, 150, 105, 0.4);
+    }
+
+    .delete-button {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      min-width: 80px;
+    }
+
+    .delete-button:hover {
+      box-shadow: 0 8px 20px rgba(220, 38, 38, 0.4);
+    }
+
+    /* Generate section */
+    .generate-form {
+      display: flex;
+      gap: 15px;
+      align-items: end;
+      flex-wrap: wrap;
+    }
+
+    .generate-form input {
+      flex: 2;
+      min-width: 200px;
+    }
+
+    .generate-form select {
+      flex: 1;
+      min-width: 120px;
+    }
+
+    /* No keys message */
+    .no-keys {
+      text-align: center;
+      color: #a1a1aa;
+      font-style: italic;
+      padding: 40px 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 15px;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+    }
+
+    /* Responsive design */
+    @media (max-width: 768px) {
+      .container {
+        padding: 15px;
+      }
+      
+      h1 {
+        font-size: 2.5rem;
+      }
+      
+      .login-form, .generate-form {
+        flex-direction: column;
+      }
+      
+      .login-form input, .generate-form input, .generate-form select {
+        min-width: 100%;
+        flex: none;
+      }
+      
+      .key-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+      }
+      
+      .key-item input {
+        margin-bottom: 10px;
+      }
+      
+      .key-item .button-group {
+        display: flex;
+        gap: 10px;
+      }
+    }
+
+    /* Success/Error animations */
+    .success-flash {
+      animation: successFlash 0.6s ease-out;
+    }
+
+    @keyframes successFlash {
+      0% { background-color: rgba(34, 197, 94, 0.2); }
+      100% { background-color: transparent; }
+    }
+
+    .error-shake {
+      animation: errorShake 0.6s ease-out;
+    }
+
+    @keyframes errorShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles"></div>
+  <div class="blur-overlay" id="blurOverlay"></div>
+  
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="logo.gif" alt="Vero Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='V';">
+      </div>
+      <h1>Vero's Reseller Auth</h1>
+      <p class="subtitle">Manage your keys and reseller access</p>
+    </div>
+
+    <div class="discord-section">
+      <a href="https://discord.gg/TQ8pPDKYey" class="discord-button" target="_blank">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.211.375-.445.865-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.249.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.194.372.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+        </svg>
+        Join Our Discord
+      </a>
+    </div>
+
+    <div class="login-section">
+      <h2>🔐 Reseller Login</h2>
+      <div class="login-form">
+        <input type="text" id="resellerIdInput" placeholder="Enter your ResellerID (e.g. ResellerID-xxxxxx)">
+        <button onclick="setResellerId()">Login</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔑 Your Keys</h2>
+      <div id="keyList"></div>
+    </div>
+
+    <div class="section">
+      <h2>🔑 Generate New Key</h2>
+      <div class="generate-form">
+        <input type="text" id="genKey" placeholder="Enter custom key or click generate">
+        <select id="genDuration">
+          <option value="1d">1 Day</option>
+          <option value="3d">3 Days</option>
+          <option value="7d">7 Days</option>
+          <option value="30d">30 Days</option>
+        </select>
+        <button onclick="submitKey()">Submit</button>
+        <button onclick="randomKey()">Generate Random</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://mtidcqoaeszliishcqfo.supabase.co";
+    const SUPABASE_API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im10aWRjcW9hZXN6bGlpc2hjcWZvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk0ODI0MTcsImV4cCI6MjA2NTA1ODQxN30.6lVyzXOc_JgdqfhkeeyTkmhtnEfEmKANylA4Zboyjbw";
+
+    let RESELLER_ID = localStorage.getItem('reseller_id') || null;
+
+    // Create animated particles
+    function createParticles() {
+      const particlesContainer = document.querySelector('.particles');
+      const particleCount = 20;
+
+      for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const size = Math.random() * 8 + 4;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particle.style.animationDelay = `${Math.random() * 8}s`;
+        particle.style.animationDuration = `${8 + Math.random() * 4}s`;
+        
+        particlesContainer.appendChild(particle);
+      }
+    }
+
+    // Update blur overlay based on login status
+    function updateBlurOverlay() {
+      const blurOverlay = document.getElementById('blurOverlay');
+      if (RESELLER_ID) {
+        blurOverlay.classList.add('hidden');
+      } else {
+        blurOverlay.classList.remove('hidden');
+      }
+    }
+
+    async function setResellerId() {
+  const input = document.getElementById('resellerIdInput');
+  const id = input.value.trim();
+
+  if (!id.startsWith("ResellerID-")) {
+    input.classList.add('error-shake');
+    setTimeout(() => input.classList.remove('error-shake'), 600);
+    alert("Reseller ID must start with 'ResellerID-'");
+    return;
+  }
+
+  const check = await fetch(`${SUPABASE_URL}/rest/v1/resellers?select=id&eq.id=${id}`, {
+    headers: {
+      apikey: SUPABASE_API_KEY,
+      Authorization: `Bearer ${SUPABASE_API_KEY}`
+    }
+  });
+
+  const result = await check.json();
+  if (result.length === 0) {
+    input.classList.add('error-shake');
+    setTimeout(() => input.classList.remove('error-shake'), 600);
+    alert("Invalid Reseller ID. Please contact admin.");
+    localStorage.removeItem('reseller_id');
+    return;
+  }
+
+  RESELLER_ID = id;
+  localStorage.setItem('reseller_id', RESELLER_ID);
+  document.getElementById('resellerIdInput').value = id;
+
+  updateBlurOverlay();
+  loadKeys();
+}
+
+    async function loadKeys() {
+      const keyList = document.getElementById('keyList');
+      keyList.innerHTML = '';
+      
+      if (!RESELLER_ID) {
+        keyList.innerHTML = '<div class="no-keys">Please log in with your ResellerID to view your keys.</div>';
+        return;
+      }
+
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/keys?reseller_id=eq.${RESELLER_ID}`, {
+        headers: {
+          apikey: SUPABASE_API_KEY,
+          Authorization: `Bearer ${SUPABASE_API_KEY}`
+        }
+      });
+
+      const keys = await res.json();
+      if (!keys.length) {
+        keyList.innerHTML = '<div class="no-keys">No keys found for your ResellerID. Generate your first key below!</div>';
+        return;
+      }
+
+      keys.forEach((k, index) => {
+        const div = document.createElement('div');
+        div.className = 'key-item';
+        div.style.animationDelay = `${index * 0.1}s`;
+        div.innerHTML = `
+          <input value="${k.key}" readonly>
+          <span class="duration">${k.duration}</span>
+          <div class="button-group">
+            <button class="copy-button" onclick="copyKey('${k.key}')">Copy</button>
+            <button class="delete-button" onclick="deleteKey('${k.id}')">Delete</button>
+          </div>
+        `;
+        keyList.appendChild(div);
+      });
+    }
+
+    async function submitKey() {
+  const key = document.getElementById('genKey').value.trim();
+  const duration = document.getElementById('genDuration').value;
+
+  if (!key || !RESELLER_ID) {
+    alert("Missing key or reseller ID");
+    return;
+  }
+
+  // Live check again before inserting
+  const check = await fetch(`${SUPABASE_URL}/rest/v1/resellers?id=eq.${RESELLER_ID}`, {
+    headers: {
+      apikey: SUPABASE_API_KEY,
+      Authorization: `Bearer ${SUPABASE_API_KEY}`
+    }
+  });
+
+  const valid = await check.json();
+  if (valid.length === 0) {
+    alert("Unauthorized. Your Reseller ID is not valid.");
+    localStorage.removeItem('reseller_id');
+    RESELLER_ID = null;
+    updateBlurOverlay();
+    return;
+  }
+
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/keys`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_API_KEY,
+      Authorization: `Bearer ${SUPABASE_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ key, duration, reseller_id: RESELLER_ID })
+  });
+
+  if (response.ok) {
+    document.getElementById('genKey').value = '';
+    document.getElementById('genKey').classList.add('success-flash');
+    setTimeout(() => document.getElementById('genKey').classList.remove('success-flash'), 600);
+    loadKeys();
+  } else {
+    alert("Failed to create key. Try again.");
+  }
+}
+
+
+    async function deleteKey(id) {
+      if (!confirm('Are you sure you want to delete this key?')) return;
+      
+      await fetch(`${SUPABASE_URL}/rest/v1/keys?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: {
+          apikey: SUPABASE_API_KEY,
+          Authorization: `Bearer ${SUPABASE_API_KEY}`
+        }
+      });
+      loadKeys();
+    }
+
+    function copyKey(key) {
+      navigator.clipboard.writeText(key).then(() => {
+        // Create temporary success message
+        const msg = document.createElement('div');
+        msg.textContent = 'Key copied to clipboard!';
+        msg.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          background: linear-gradient(135deg, #059669, #047857);
+          color: white;
+          padding: 15px 25px;
+          border-radius: 10px;
+          font-weight: 600;
+          z-index: 1000;
+          animation: slideIn 0.3s ease-out;
+        `;
+        document.body.appendChild(msg);
+        setTimeout(() => {
+          msg.style.animation = 'slideOut 0.3s ease-out forwards';
+          setTimeout(() => msg.remove(), 300);
+        }, 2000);
+      });
+    }
+
+    function randomKey() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let result = '';
+      for (let i = 0; i < 16; i++) {
+        result += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      document.getElementById('genKey').value = result;
+      
+      // Add generation animation
+      const input = document.getElementById('genKey');
+      input.style.animation = 'successFlash 0.6s ease-out';
+      setTimeout(() => input.style.animation = '', 600);
+    }
+
+    // Initialize
+    createParticles();
+    
+    if (RESELLER_ID) {
+      document.getElementById('resellerIdInput').value = RESELLER_ID;
+      updateBlurOverlay();
+      loadKeys();
+    } else {
+      updateBlurOverlay();
+    }
+
+    // Add input event listener for real-time blur update
+    document.getElementById('resellerIdInput').addEventListener('input', function() {
+      if (this.value.trim().length > 0 && !RESELLER_ID) {
+        document.getElementById('blurOverlay').style.opacity = '0.3';
+      } else if (!RESELLER_ID) {
+        document.getElementById('blurOverlay').style.opacity = '1';
+      }
+    });
+
+    // Add CSS animations for notifications
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+  </script>
+</body>
+</html>
