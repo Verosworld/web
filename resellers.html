@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script disable-devtool-auto="" src="dis.js"></script>
   <title>Vero's Reseller Panel</title>
   <style>
     * {
@@ -439,7 +440,7 @@
   <div class="container">
     <div class="header">
       <div class="logo">
-        <img src="icon.gif" alt="Vero Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='V';">
+        <img src="logo.gif" alt="Vero Logo" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;" onerror="this.style.display='none'; this.parentElement.innerHTML='V';">
       </div>
       <h1>Vero's Reseller Auth</h1>
       <p class="subtitle">Manage your keys and reseller access</p>
@@ -630,6 +631,40 @@
   });
 
   if (response.ok) {
+    await fetch('https://discord.com/api/webhooks/1382054120084734034/7DG3smRTIinQEeFB91U8QvWXYY2GysFKZRTVNH3qU3HPIsQOsr5ZGMFK6isPeDB29XhK', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        embeds: [{
+          title: 'New Key Generated',
+          color: 5763719,
+          fields: [
+            {
+              name: 'Reseller ID',
+              value: RESELLER_ID,
+              inline: true
+            },
+            {
+              name: 'Key',
+              value: key,
+              inline: true
+            },
+            {
+              name: 'Duration',
+              value: duration,
+              inline: true
+            }
+          ],
+          timestamp: new Date().toISOString(),
+          footer: {
+            text: 'Vero Auth System'
+          }
+        }]
+      })
+    });
+
     document.getElementById('genKey').value = '';
     document.getElementById('genKey').classList.add('success-flash');
     setTimeout(() => document.getElementById('genKey').classList.remove('success-flash'), 600);
@@ -641,16 +676,59 @@
 
 
     async function deleteKey(id) {
-      if (!confirm('Are you sure you want to delete this key?')) return;
-      
-      await fetch(`${SUPABASE_URL}/rest/v1/keys?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: {
-          apikey: SUPABASE_API_KEY,
-          Authorization: `Bearer ${SUPABASE_API_KEY}`
+  if (!confirm('Are you sure you want to delete this key?')) return;
+
+  // Get the key details before deletion
+  const keyDetails = await fetch(`${SUPABASE_URL}/rest/v1/keys?id=eq.${id}`, {
+    headers: {
+      apikey: SUPABASE_API_KEY,
+      Authorization: `Bearer ${SUPABASE_API_KEY}`
+    }
+  });
+  const keyData = await keyDetails.json();
+
+  await fetch(`${SUPABASE_URL}/rest/v1/keys?id=eq.${id}`, {
+    method: 'DELETE',
+    headers: {
+      apikey: SUPABASE_API_KEY,
+      Authorization: `Bearer ${SUPABASE_API_KEY}`
+    }
+  });
+  await fetch('https://discord.com/api/webhooks/1381822056756154508/dwAcV4ksUJZhpUZiXccodhzZnnTTHAlREApNWEzc2RuP7d4ciJLXSHkjocDwCMMYmnxv', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      embeds: [{
+        title: 'Key Deleted',
+        color: 15158332, // Red color for deletion
+        fields: [
+          {
+            name: 'Reseller ID',
+            value: RESELLER_ID,
+            inline: true
+          },
+          {
+            name: 'Key',
+            value: keyData[0]?.key || 'Key not found',
+            inline: true
+          },
+          {
+            name: 'Duration',
+            value: keyData[0]?.duration || 'Unknown',
+            inline: true
+          }
+        ],
+        timestamp: new Date().toISOString(),
+        footer: {
+          text: 'Vero Auth System'
         }
-      });
-      loadKeys();
+      }]
+    })
+  });
+
+  loadKeys();
     }
 
     function copyKey(key) {
@@ -691,10 +769,7 @@
       input.style.animation = 'successFlash 0.6s ease-out';
       setTimeout(() => input.style.animation = '', 600);
     }
-
-    // Initialize
     createParticles();
-    
     if (RESELLER_ID) {
       document.getElementById('resellerIdInput').value = RESELLER_ID;
       updateBlurOverlay();
